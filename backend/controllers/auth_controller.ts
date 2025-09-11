@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
+import { isSqlInjectionAttempt } from '../utils/sqlInjectionDetector';
+import Log from '../models/Logs';
+import { evaluateLogForAlerts } from '../services/alertEngine';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   const { username, password } = req.body;
@@ -28,6 +31,25 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
+  const suspicious = isSqlInjectionAttempt(username) || isSqlInjectionAttempt(password);
+
+  const log = await Log.create({
+    source: 'auth',
+    timestamp: new Date(),
+    message: suspicious
+      ? `Tentativa suspeita de login detectada. Possível SQL Injection. Username: "${username}"`
+      : `Tentativa de login com username: "${username}"`,
+    severity: suspicious ? 'critical' : 'info',
+    userId: undefined, // ou req.user?.id se estiver autenticado
+  });
+
+  await evaluateLogForAlerts(log);
+
+  if (suspicious) {
+    res.status(400).json({ error: 'Entrada suspeita detectada' });
+    return;
+  }
+  
   try {
     const user = await User.findOne({ where: { username } });
 

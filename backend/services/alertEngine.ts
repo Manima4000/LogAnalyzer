@@ -22,7 +22,17 @@ const alertRules: AlertRule[] = [
         type: 'Port Scan',
         message: (log) => `Possivel port scan detectado: ${log.message}`,
         severity: 'medium'
-    },    
+    },
+    {
+        condition: (log) =>
+            log.source === 'auth' &&
+            log.severity === 'critical' &&
+            log.message.includes('SQL Injection'),
+        type: 'SQL Injection',
+        message: (log) => `Tentativa de SQL Injection detectada: ${log.message}`,
+        severity: 'high'
+    },
+  
     //Lugar para adiocionar mais regras para gerar alertas
 ]
 
