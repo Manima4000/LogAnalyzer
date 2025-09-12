@@ -9,6 +9,11 @@ import alertRoutes from './routes/alert';
 import userRoutes from './routes/user';
 import internalRouts from './routes/internal';
 import alertRuleRoutes from './routes/alertRules';
+import honeypotRouter from './routes/honeypot';
+import { setup } from 'swagger-ui-express';
+import { setupHoneypots } from './scripts/initHoneypots';
+import User from './models/User';
+import HoneypotConfig from './models/HoneypotConfig';
 
 dotenv.config();
 
@@ -17,30 +22,42 @@ app.use(cors());
 app.use(express.json());
 setupSwagger(app);
 
+const adminUserId = parseInt(process.env.ADMIN_ID ?? '1');
 
-sequelize.authenticate()
-  .then(() => console.log('✅ Conectado ao PostgreSQL'))
-  .catch(err => console.error('Erro ao conectar ao banco:', err));
+async function startServer() {
+  try {
+    await sequelize.authenticate();
+    console.log('✅ Conectado ao PostgreSQL');
 
-sequelize.sync({ alter: true })
-  .then(() => console.log('📦 Tabelas sincronizadas'))
-  .catch(err => console.error('Erro ao sincronizar tabelas:', err));
+    await sequelize.sync({ alter: true });
+    console.log('📦 Tabelas sincronizadas');
 
-
-
-app.use('/api/auth', authRoutes); //Registro e login
-app.use('/api/logs', logRoutes);
-app.use('/api/users', userRoutes); //Rota para obter todos os usuários
-app.use('/api/alerts', alertRoutes); 
-app.use('/api/alert-rules', alertRuleRoutes); // Rotas para regras de alerta
-app.use('/internal', internalRouts); // Rotas internas (ex: criação de admin)
-
-
-app.get('/', (req, res) => {
-  res.send('Servidor está ativo!');
-});
+    const honeypotCount = await HoneypotConfig.count();
+    if (honeypotCount === 0) {
+      console.log('🔧 Nenhum honeypot configurado. Executando setup inicial...');
+      await setupHoneypots(adminUserId);
+    } else {
+      console.log(`✅ ${honeypotCount} honeypots já configurados. Pulando setup inicial.`);
+    }
 
 
+    app.use('/api/auth', authRoutes);
+    app.use('/api/logs', logRoutes);
+    app.use('/api/users', userRoutes);
+    app.use('/api/alerts', alertRoutes);
+    app.use('/api/alert-rules', alertRuleRoutes);
+    app.use('/internal', internalRouts);
+    app.use('/api/honeypot', honeypotRouter);
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+    app.get('/', (req, res) => {
+      res.send('Servidor está ativo!');
+    });
+
+    const PORT = process.env.PORT || 3001;
+    app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+  } catch (err) {
+    console.error('❌ Erro ao iniciar o servidor:', err);
+  }
+}
+
+startServer();

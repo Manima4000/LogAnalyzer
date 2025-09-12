@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User';
-import Log from '../models/Logs';
 import { createAndProcessLog } from '../services/logService';
 
 export const createAdminUser = async (req: Request, res: Response): Promise<void> => {
