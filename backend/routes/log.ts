@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
-import { ingestLog } from '../controllers/log_controller';
+import { getLogs, ingestLog } from '../controllers/log_controller';
+import { authorize } from '../middleware/authorizeRoles';
 
 const router = Router();
 
-router.post('/', authenticateToken, ingestLog)
+router.post('/create-log', authenticateToken, authorize(['admin','analyst']),ingestLog)
 
 /**
  * @swagger
@@ -51,5 +52,7 @@ router.post('/', authenticateToken, ingestLog)
  *       401:
  *         description: Token não fornecido ou inválido
  */
+
+router.get('/list', authenticateToken, authorize(['admin','analyst']), getLogs);
 
 export default router;

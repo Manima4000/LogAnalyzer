@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { detectors } from "../utils/securityDetectors";
-import Log from "../models/Logs";
-import { evaluateLogForAlerts } from "../services/alertEngine";
+import { createAndProcessLog } from "../services/logService";
 
 export function theatScanner(fields: (keyof Request['body'])[]){
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -20,15 +19,18 @@ export function theatScanner(fields: (keyof Request['body'])[]){
         const severity = issues.length ? 'critical' : 'info';
         const message = issues.length ? `Entradas suspeitas detectadas: ${issues.join('; ')}` : `Login realizado: ${req.body.username}`;
 
-        const log = await Log.create({
-            source:'auth',
-            timestamp: new Date(),
-            message,
-            severity,
-            userId: req.user?.id
-        })
+        try {
+            await createAndProcessLog({
+                source: 'auth',
+                timestamp: new Date(),
+                message,
+                severity,
+                userId: req.user?.id
+            });
+            } catch {
+            return res.status(500).json({ error: 'Falha ao registrar log' });
+        }
 
-        await evaluateLogForAlerts(log);
 
         if (issues.length){
             res.status(400).json({ error: 'Entradas suspeitas detectadas', details: issues });

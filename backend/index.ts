@@ -4,10 +4,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import sequelize from './config/database';
 import authRoutes from './routes/auth';
-import User from './models/User';
-import protectedRoutes from './routes/protected';
 import logRoutes from './routes/log';
 import alertRoutes from './routes/alert';
+import userRoutes from './routes/user';
+import internalRouts from './routes/internal';
+import alertRuleRoutes from './routes/alertRules';
 
 dotenv.config();
 
@@ -28,9 +29,11 @@ sequelize.sync({ alter: true })
 
 
 app.use('/api/auth', authRoutes); //Registro e login
-app.use('/api/protected', protectedRoutes); 
 app.use('/api/logs', logRoutes);
+app.use('/api/users', userRoutes); //Rota para obter todos os usuários
 app.use('/api/alerts', alertRoutes); 
+app.use('/api/alert-rules', alertRuleRoutes); // Rotas para regras de alerta
+app.use('/internal', internalRouts); // Rotas internas (ex: criação de admin)
 
 
 app.get('/', (req, res) => {
