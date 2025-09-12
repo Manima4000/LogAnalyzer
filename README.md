@@ -185,6 +185,4 @@ Este projeto está sob a licença **MIT**.
 
 ---
 
-## 📦 Extras
 
-Se quiser que eu gere uma versão em inglês ou adicione **badges** e instruções de deploy com **Docker**, é só pedir. 🚀
