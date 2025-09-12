@@ -2,9 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
-import { isSqlInjectionAttempt } from '../utils/sqlInjectionAttempt';
-import Log from '../models/Logs';
-import { evaluateLogForAlerts } from '../services/alertEngine';
+import { createAndProcessLog } from '../services/logService';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   const { username, password } = req.body;
@@ -35,6 +33,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const user = await User.findOne({ where: { username } });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
+      await createAndProcessLog({
+        source: 'auth',
+        timestamp: new Date(),
+        message: `Tentativa de login falha para usuário: ${username}`,
+        severity: 'warning',
+        userId: user?.id
+      });
       res.status(401).json({ error: 'Usuário ou senha inválidos' });
       return;
     }
@@ -44,6 +49,14 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       process.env.JWT_SECRET as string,
       { expiresIn: '1h' }
     );
+
+    await createAndProcessLog({
+      source: 'auth',
+      timestamp: new Date(),
+      message: `Login realizado com sucesso: ${username}`,
+      severity: 'info',
+      userId: user.id
+    });
 
     res.json({ token });
   } catch (err) {

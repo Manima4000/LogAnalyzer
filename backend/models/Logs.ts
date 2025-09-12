@@ -1,7 +1,7 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
-interface LogAttributes {
+export interface LogAttributes {
   id: number;
   source: string;
   timestamp: Date;
@@ -10,7 +10,7 @@ interface LogAttributes {
   userId?: number;
 }
 
-interface LogCreationAttributes extends Optional<LogAttributes, 'id'> {}
+export interface LogCreationAttributes extends Optional<LogAttributes, 'id'> {}
 
 class Log extends Model<LogAttributes, LogCreationAttributes> implements LogAttributes {
     public id!: number;
