@@ -27,9 +27,9 @@ const alertRules: AlertRule[] = [
         condition: (log) =>
             log.source === 'auth' &&
             log.severity === 'critical' &&
-            log.message.includes('SQL Injection'),
-        type: 'SQL Injection',
-        message: (log) => `Tentativa de SQL Injection detectada: ${log.message}`,
+            log.message.includes('Entradas suspeitas detectadas'),
+        type: 'Field Injection Attempt',
+        message: (log) => `Tentativa de injeção nos campos de login: ${log.message}`,
         severity: 'high'
     },
   
