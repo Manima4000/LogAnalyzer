@@ -1,0 +1,18 @@
+[
+  {
+    "id": "xss-login",
+    "type": "XSS Attempt",
+    "severity": "high",
+    "matchSource": "auth",
+    "matchSeverity": "critical",
+    "containsMessage": "Detector: XSS"
+  },
+  {
+    "id": "sql-injection-login",
+    "type": "SQL Injection Attempt",
+    "severity": "high",
+    "matchSource": "auth",
+    "matchSeverity": "critical",
+    "containsMessage": "Detector: SQL Injection"
+  }
+]

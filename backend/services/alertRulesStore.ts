@@ -1,32 +1,25 @@
-export interface AlertRule {
-  id: string;
-  type: string;
-  severity: 'low' | 'medium' | 'high';
-  matchSource?: string;
-  matchSeverity?: 'info' | 'warning' | 'critical';
-  containsMessage?: string;
+// services/alertRulesService.ts
+import AlertRule from '../models/AlertRules';
+import type { AlertRuleCreationAttributes } from '../models/AlertRules';
+
+export async function getAlertRules() {
+  return await AlertRule.findAll();
 }
 
-let alertRules: AlertRule[] = [];
-
-export function getAlertRules(): AlertRule[] {
-  return alertRules;
+export async function createAlertRule(data: AlertRuleCreationAttributes) {
+  return await AlertRule.create(data);
 }
 
-export function addAlertRule(rule: AlertRule): void {
-  alertRules.push(rule);
+export async function updateAlertRule(id: string, updates: Partial<AlertRule>) {
+  const rule = await AlertRule.findByPk(id);
+  if (!rule) return null;
+  await rule.update(updates);
+  return rule;
 }
 
-export function updateAlertRule(id: string, updates: Partial<AlertRule>): boolean {
-  const index = alertRules.findIndex(r => r.id === id);
-  if (index === -1) return false;
-  alertRules[index] = { ...alertRules[index], ...updates };
-  return true;
-}
-
-export function deleteAlertRule(id: string): boolean {
-  const index = alertRules.findIndex(r => r.id === id);
-  if (index === -1) return false;
-  alertRules.splice(index, 1);
+export async function deleteAlertRule(id: string) {
+  const rule = await AlertRule.findByPk(id);
+  if (!rule) return false;
+  await rule.destroy();
   return true;
 }

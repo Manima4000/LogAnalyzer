@@ -31,7 +31,7 @@ import { getAlertRules } from './alertRulesStore';
 // ]
 
 export const evaluateLogForAlerts = async (log: Log): Promise<void> => {
-  const rules = getAlertRules();
+  const rules = await getAlertRules();
 
   for (const rule of rules) {
     const matchesSource = rule.matchSource ? log.source === rule.matchSource : true;
@@ -50,3 +50,4 @@ export const evaluateLogForAlerts = async (log: Log): Promise<void> => {
     }
   }
 };
+

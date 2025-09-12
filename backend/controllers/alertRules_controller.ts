@@ -2,51 +2,37 @@
 import { Request, Response } from 'express';
 import {
   getAlertRules,
-  addAlertRule,
+  createAlertRule,
   updateAlertRule,
   deleteAlertRule
 } from '../services/alertRulesStore';
-import { v4 as uuidv4 } from 'uuid';
 
-export const listAlertRules = (req: Request, res: Response) => {
-  res.json(getAlertRules());
+export const listAlertRules = async (req: Request, res: Response) => {
+  const rules = await getAlertRules();
+  res.json(rules);
 };
 
-export const createAlertRule = (req: Request, res: Response) => {
+export const createRule = async (req: Request, res: Response) => {
   const { type, severity, matchSource, matchSeverity, containsMessage } = req.body;
-
   if (!type || !severity) {
     return res.status(400).json({ error: 'Campos obrigatórios: type, severity' });
   }
 
-  const newRule = {
-    id: uuidv4(),
-    type,
-    severity,
-    matchSource,
-    matchSeverity,
-    containsMessage
-  };
-
-  addAlertRule(newRule);
-  res.status(201).json(newRule);
+  const rule = await createAlertRule({ type, severity, matchSource, matchSeverity, containsMessage });
+  res.status(201).json(rule);
 };
 
-export const editAlertRule = (req: Request, res: Response) => {
+export const editRule = async (req: Request, res: Response) => {
   const { id } = req.params;
   const updates = req.body;
-
-  const success = updateAlertRule(id, updates);
-  if (!success) return res.status(404).json({ error: 'Regra não encontrada' });
-
-  res.json({ message: 'Regra atualizada com sucesso' });
+  const rule = await updateAlertRule(id, updates);
+  if (!rule) return res.status(404).json({ error: 'Regra não encontrada' });
+  res.json(rule);
 };
 
-export const removeAlertRule = (req: Request, res: Response) => {
+export const removeRule = async (req: Request, res: Response) => {
   const { id } = req.params;
-
-  const success = deleteAlertRule(id);
+  const success = await deleteAlertRule(id);
   if (!success) return res.status(404).json({ error: 'Regra não encontrada' });
-
   res.json({ message: 'Regra removida com sucesso' });
 };
