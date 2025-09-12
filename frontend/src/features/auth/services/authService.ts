@@ -1,6 +1,8 @@
+export const API_URL_BACK = import.meta.env.VITE_API_URL_BACK;
+
 export async function loginUser(data: { username: string; password: string }) {
     try{
-        const response = await fetch('http://localhost:4000' + '/api/auth/login', {
+        const response = await fetch(API_URL_BACK + '/api/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
