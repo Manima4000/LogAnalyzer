@@ -2,6 +2,7 @@ import ServicesSection from './sections/ServiceSection';
 import LogsSection from './sections/LogsSection';
 import AlertsSection from './sections/AlertSection';
 import ManageServicesSection from './sections/ManageServiceSection';
+import AllLogsSection from './sections/AllLogsSection';
 
 interface Props {
   role: 'admin' | 'analyst';
@@ -10,7 +11,7 @@ interface Props {
   username: string;
 }
 
-export default function DashboardContent({ role, section, token }: Props) {
+export default function DashboardContent({ role, section, token, username }: Props) {
   const renderSection = () => {
     switch (section) {
       case 'services':
@@ -21,6 +22,8 @@ export default function DashboardContent({ role, section, token }: Props) {
         return role === 'admin' ? <AlertsSection token={token} /> : null;
       case 'manage':
         return role === 'admin' ? <ManageServicesSection token={token} /> : null;
+      case 'allLogs':
+        return role === 'admin' ? <AllLogsSection token={token}/> : null;
       default:
         return <div className="text-white">Seção inválida</div>;
     }
@@ -29,7 +32,7 @@ export default function DashboardContent({ role, section, token }: Props) {
   return (
     <div className="text-white">
       <h1 className="text-3xl font-bold text-blue-300 mb-6">
-        Bem-vindo, {role === 'admin' ? 'Administrador' : 'Analista'}
+        Bem-vindo, {role === 'admin' ? 'Administrador' : username}
       </h1>
       {renderSection()}
     </div>

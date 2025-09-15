@@ -9,3 +9,12 @@ export async function fetchMyLogs(token:string){
     if (!response.ok) throw new Error("Erro ao buscar logs")
     return response.json()
 }
+
+export async function fetchAllLogs(token:string){
+    const endpoint = '/api/logs/list';
+    const response = await fetch(API_URL_BACK + endpoint, {
+        headers: {Authorization: `Bearer ${token}`}
+    })
+    if (!response.ok) throw new Error("Erro ao buscar logs")
+    return response.json()
+}

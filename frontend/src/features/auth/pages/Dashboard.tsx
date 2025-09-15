@@ -5,31 +5,47 @@ import { roleVerification } from '../services/roleVerification';
 import { getUsernameFromToken } from '../services/authService';
 
 export default function Dashboard() {
-  const [role, setRole] = useState<'admin' | 'analyst'>('analyst');
+  const [role, setRole] = useState<'admin' | 'analyst' | null>(null);
   const [activeSection, setActiveSection] = useState<string>('services');
   const [username, setUsername] = useState<string>('');
-  const [token1,setToken1] = useState<string>('')
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchRole = async () => {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        throw new Error('No token found');
+      const storedToken = localStorage.getItem('token');
+      if (!storedToken) {
+        console.error('Token não encontrado');
+        return;
       }
-      setToken1(token)
-      const storedRole = await roleVerification(token);
-      const storedUsername = await getUsernameFromToken(token);
 
-      if (storedUsername) setUsername(storedUsername);
-      else setUsername('Analista');
+      setToken(storedToken);
 
-      if (storedRole === 'admin' || storedRole === 'analyst') setRole(storedRole);
-      else setRole('analyst');
+      try {
+        const storedRole = await roleVerification(storedToken);
+        const storedUsername = await getUsernameFromToken(storedToken);
+
+        setRole(storedRole ?? 'analyst');
+        setUsername(storedUsername ?? 'Analista');
+      } catch (err) {
+        console.error('Erro ao verificar role:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
+
     fetchRole();
   }, []);
 
-   return (
+  if (isLoading || !token || !role) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-black text-white">
+        <p>Carregando dashboard...</p>
+      </div>
+    );
+  }
+
+  return (
     <div
       className="h-screen bg-cover bg-center flex"
       style={{ backgroundImage: "url('/backgroundImage.png')" }}
@@ -39,7 +55,12 @@ export default function Dashboard() {
       </div>
 
       <div className="flex-1 p-10 overflow-y-auto">
-        <DashboardContent role={role} username={username} section={activeSection} token= {token1}/>
+        <DashboardContent
+          role={role}
+          username={username}
+          section={activeSection}
+          token={token}
+        />
       </div>
     </div>
   );
