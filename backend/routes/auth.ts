@@ -1,11 +1,14 @@
 import { Router } from 'express';
-import { register, login } from '../controllers/auth_controller';
+import { register, login, roleVerification, usernameVerification } from '../controllers/auth_controller';
 import { threatScanner } from '../middleware/threatScanner';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
 router.post('/register', register);
 router.post('/login', threatScanner(['username', 'password']), login);
+router.post('/verify-role', authenticateToken, roleVerification);
+router.post('/verify-username', authenticateToken, usernameVerification);
 
 
 

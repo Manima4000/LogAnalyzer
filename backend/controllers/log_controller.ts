@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { createAndProcessLog } from '../services/logService';
+import { createAndProcessLog, getAllLogs, getMineLogs } from '../services/logService';
 import Log from '../models/Logs';
 import { Op } from 'sequelize';
+import { getUserIdFromToken } from '../services/tokenService';
 
 
 export const ingestLog = async (req: Request, res: Response): Promise<void> => {
@@ -10,6 +11,10 @@ export const ingestLog = async (req: Request, res: Response): Promise<void> => {
     res.status(400).json({ error: 'Todos os campos são obrigatórios' });
     return;
   }
+  const authHeader = req.headers['authorization'];
+  const token = authHeader?.split(' ')[1];
+  if(!token) throw new Error('Token não fornecido')
+  const userId = getUserIdFromToken(token)
 
   try {
     const log = await createAndProcessLog({
@@ -17,7 +22,7 @@ export const ingestLog = async (req: Request, res: Response): Promise<void> => {
       timestamp: new Date(timestamp),
       message,
       severity,
-      userId: req.user?.id
+      userId: userId
     });
     res.status(201).json(log);
   } catch (err) {
@@ -25,71 +30,32 @@ export const ingestLog = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const getLogs = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    // paginação e filtros via query params
-    const page     = Math.max(Number(req.query.page)  || 1,   1);
-    const limit    = Math.min(Number(req.query.limit) || 20, 100);
-    const offset   = (page - 1) * limit;
-    const {
-      severity,    // info | warning | critical
-      source,      // string
-      userId,      // numeric
-      startDate,   // ISO string
-      endDate,     // ISO string
-      keyword      // mensagem parcial
-    } = req.query as Record<string, string>;
-
-    // monta cláusula WHERE dinamicamente
-    const where: any = {};
-    if (severity) {
-      where.severity = severity;
-    }
-    if (source) {
-      where.source = { [Op.iLike]: `%${source}%` };
-    }
-    if (userId) {
-      where.userId = Number(userId);
-    }
-    if (startDate || endDate) {
-      where.timestamp = {};
-      if (startDate) {
-        where.timestamp[Op.gte] = new Date(startDate);
-      }
-      if (endDate) {
-        where.timestamp[Op.lte] = new Date(endDate);
-      }
-    }
-    if (keyword) {
-      where.message = { [Op.iLike]: `%${keyword}%` };
-    }
-
-    // busca paginada e ordenada
-    const { rows: data, count: total } = await Log.findAndCountAll({
-      where,
-      order: [['timestamp', 'DESC']],
-      limit,
-      offset,
-      attributes: ['id', 'source', 'timestamp', 'message', 'severity', 'userId']
-    });
-
-    // constrói metadados de paginação
-    const pages = Math.ceil(total / limit);
-
-    res.status(200).json({
-      data,
-      pagination: {
-        total,
-        pages,
-        page,
-        limit
-      }
-    });
-  } catch (err) {
-    next(err);
+export const getLogs = async (req: Request, res: Response) => {
+  try{
+    const logs = await getAllLogs();
+    res.status(200).json(logs)
+  } catch (error){
+    console.error('Erro ao buscar Logs')
+    res.status(500).json({error: 'Erro ao buscar logs'})
   }
-};
+}
+
+export const getMyLogs = async(req: Request, res: Response) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader?.split(' ')[1];
+  if (!token){
+    res.status(401).json({ error: 'Token não fornecido' });
+    return;
+  }
+  const userId = getUserIdFromToken(token)
+  if (!userId){
+    res.status(400).json({ error: 'Erro ao buscar userId' });
+    return;
+  }
+  try{
+    const myLogs = await getMineLogs(userId);
+    res.status(200).json(myLogs)
+  } catch(error){
+    res.status(500).json({error: 'Erro as buscar seus logs'})
+  }
+}

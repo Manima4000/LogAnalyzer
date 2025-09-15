@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
-import { getLogs, ingestLog } from '../controllers/log_controller';
+import { getLogs, getMyLogs, ingestLog } from '../controllers/log_controller';
 import { authorize } from '../middleware/authorizeRoles';
 
 const router = Router();
@@ -54,5 +54,6 @@ router.post('/create-log', authenticateToken, authorize(['admin','analyst']),ing
  */
 
 router.get('/list', authenticateToken, authorize(['admin','analyst']), getLogs);
+router.get('/myLogs',authenticateToken,authorize(['admin','analyst']), getMyLogs);
 
 export default router;

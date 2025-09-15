@@ -4,9 +4,6 @@ import { createAndProcessLog } from './logService';
 
 const activeServers: Record<number, net.Server> = {};
 
-/**
- * Inicializa honeypot em uma porta específica
- */
 export async function initializeHoneypot(port: number, userId: number) {
   const config = await HoneypotConfig.findOne({ where: { port } });
   if (!config || !config.enabled) {
@@ -35,16 +32,14 @@ export async function initializeHoneypot(port: number, userId: number) {
       timestamp: new Date(),
       message: `Honeypot iniciado na porta ${port}`,
       severity: 'info',
-      userId
+      userId: userId
     });
 
     console.log(`✅ Honeypot escutando na porta ${port}`);
   });
 }
 
-/**
- * Registra interação de usuário com honeypot
- */
+
 export async function handleHoneypotInteraction(userId: number, port: number) {
   const config = await HoneypotConfig.findOne({ where: { port } });
   if (!config || !config.enabled) {
@@ -56,13 +51,10 @@ export async function handleHoneypotInteraction(userId: number, port: number) {
     timestamp: new Date(),
     message: `Conexão simulada na porta ${port} pelo usuário ${userId}`,
     severity: 'info',
-    userId
+    userId: userId
   });
 }
 
-/**
- * Encerra honeypot em uma porta específica
- */
 export async function terminateHoneypot(port: number, userId: number) {
   const server = activeServers[port];
 
@@ -74,10 +66,10 @@ export async function terminateHoneypot(port: number, userId: number) {
       timestamp: new Date(),
       message: `Tentativa de encerramento na porta ${port}, mas já não estava ativo.`,
       severity: 'info',
-      userId
+      userId: userId
     });
 
-    return; // 👈 Não lança erro, apenas sai
+    return; 
   }
 
   server.close(() => {
@@ -95,12 +87,19 @@ export async function terminateHoneypot(port: number, userId: number) {
 }
 
 
-/**
- * Inicializa todos honeypots ativos no banco
- */
 export async function startAllHoneypots(userId: number) {
   const configs = await HoneypotConfig.findAll({ where: { enabled: true } });
   for (const config of configs) {
     await initializeHoneypot(config.port, userId);
+  }
+}
+
+export async function getAllHoneypots(): Promise<HoneypotConfig[]> {
+  try {
+    const honeypots = await HoneypotConfig.findAll()
+    return honeypots;
+  } catch (error) {
+    console.error('Erro ao buscar honeypots:', error);
+    return [];
   }
 }

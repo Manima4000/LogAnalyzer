@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-interface JwtPayload {
+export interface JwtPayload {
   id: number;
+  username: string;
   role: 'analyst' | 'admin';
 }
 

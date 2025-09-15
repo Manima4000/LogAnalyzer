@@ -3,6 +3,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { createAndProcessLog } from '../services/logService';
+import { JwtPayload } from '../middleware/auth';
+import { getRoleFromToken, getUsernameFromToken } from '../services/tokenService';
+import { get } from 'http';
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   const { username, password } = req.body;
@@ -45,7 +48,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const token = jwt.sign(
-      { id: user.id, role: user.role },
+      { id: user.id, username: user.username, role: user.role },
       process.env.JWT_SECRET as string,
       { expiresIn: '1h' }
     );
@@ -63,3 +66,35 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ error: 'Erro ao realizar login' });
   }
 };
+
+export const roleVerification = (req: Request, res: Response): JwtPayload['role'] => {
+  const { token } = req.body;
+
+  if (!token) {
+    res.status(400).json({ error: 'Token é obrigatório' });
+    throw new Error('Token é obrigatório');
+  }
+  const role = getRoleFromToken(token, ['admin', 'analyst']);
+  if (!role) {
+    res.status(403).json({ error: 'Permissões insuficientes' });
+    throw new Error('Permissões insuficientes');
+  }
+  res.json({ role });
+  return role;
+}
+
+export const usernameVerification = (req: Request, res: Response):JwtPayload['username'] =>{
+  const { token } = req.body
+  if (!token) {
+    res.status(400).json({ error: 'Token é obrigatório' });
+    throw new Error('Token é obrigatório');
+  }
+  const username = getUsernameFromToken(token);
+  if (!username) {
+    res.status(403).json({ error: 'Permissões insuficientes' });
+    throw new Error('Permissões insuficientes');
+  }
+  res.json({ username });
+  return username;
+}
+

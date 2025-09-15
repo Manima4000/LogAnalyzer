@@ -1,17 +1,24 @@
 import { useState } from 'react';
-import { loginUser } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
+import { registerUser } from '../services/authService';
 
-export default function Login() {
+export default function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showError, setShowError] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await loginUser({ username, password });
-    if (success) {
-      navigate('/dashboard');
+    try {
+      const success = await registerUser({ username, password });
+      if (success) {
+        navigate('/login');
+      } else {
+        setShowError(true);
+      }
+    } catch (error) {
+      setShowError(true);
     }
   };
 
@@ -20,20 +27,35 @@ export default function Login() {
       className="h-screen bg-cover bg-center flex items-center justify-center"
       style={{ backgroundImage: "url('/backgroundImage.png')" }}
     >
+      {showError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-lg p-6 shadow-xl text-center max-w-sm w-full">
+            <h2 className="text-xl font-semibold text-red-600 mb-4">Erro ao registrar</h2>
+            <p className="text-gray-700 mb-6">Não foi possível concluir o registro. Tente novamente.</p>
+            <button
+              onClick={() => setShowError(false)}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+    
       <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl p-10 w-full max-w-md flex flex-col items-center space-y-6">
         
         {/* Ícone no topo */}
         <div className="bg-blue-500 p-5 rounded-full shadow-lg">
-          <i className="bi bi-database text-white text-3xl"></i>
+          <i className="bi bi-person-plus text-white text-3xl"></i>
         </div>
 
         {/* Título */}
         <h1 className="text-2xl font-bold text-blue-300 tracking-wide text-center">
-          Sistema de Registro de Logs
+          Criar Conta
         </h1>
 
         {/* Formulário */}
-        <form onSubmit={handleSubmit} className="w-full space-y-4">
+        <form onSubmit={handleRegister} className="w-full space-y-4">
           <div className="relative">
             <input
               type="text"
@@ -46,7 +68,6 @@ export default function Login() {
               <i className="bi bi-person"></i>
             </div>
           </div>
-
           <div className="relative">
             <input
               type="password"
@@ -64,19 +85,9 @@ export default function Login() {
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition duration-300 font-semibold"
           >
-            LOGIN
+            REGISTRAR
           </button>
         </form>
-        <div className="text-white text-sm text-center mt-4">
-          <span>Não tem uma conta? </span>
-          <button
-            type="button"
-            onClick={() => navigate('/register')}
-            className="text-blue-400 hover:underline"
-          >
-            Registre-se
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { listAlerts } from '../controllers/alert_controller';
+import { authorize } from '../middleware/authorizeRoles';
 
 const router = Router();
-router.get('/list', authenticateToken, listAlerts);
+router.get('/list', authenticateToken, authorize(['admin']),listAlerts);
 
 /**
  * @swagger
